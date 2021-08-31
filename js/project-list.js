@@ -24,6 +24,8 @@ function initializeProjectList() {
             .on("change", () => {
                 // Print the selected project id
                 let selected_project = d3.select("#projects-list").property('value');
+                localStorage.setItem("selected_project", selected_project);
+                updateMapList(selected_project);
                 console.log(selected_project);
             })
             .selectAll("option")
@@ -32,5 +34,28 @@ function initializeProjectList() {
             .append("option")
             .attr("value", (d) => { return d.id })
             .text((d) => { return `${d.lab_title} -> ${d.title}` });
+    });
+}
+
+function updateMapList(selected_project) {
+    getProjectById(access_token, selected_project).then(project => {
+        console.log(project.missions);
+        let options = d3.select("#missions-list")
+            .on("change", () => {
+                // Print the selected mission id
+                let selected_mission = d3.select("#missions-list").property('value');
+                localStorage.setItem("selected_mission", selected_mission);
+                console.log(selected_mission);
+            })
+            .selectAll("option")
+            .data(project.missions, d => d.id);
+        options.enter()
+            .append("option")
+            .attr("value", (d) => { return d.id })
+            .text((d) => { return d.title });
+        options.append("option")
+            .attr("value", (d) => { return d.id })
+            .text((d) => { return d.title });
+        options.exit().remove();
     });
 }
