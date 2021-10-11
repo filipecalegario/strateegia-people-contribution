@@ -1,6 +1,8 @@
 let users = [];
 let questions = [];
-let rows = [];
+let preRows = [];
+let postRows = [];
+let columns = [];
 
 function initializeProjectList() {
     getAllProjects(access_token).then(labs => {
@@ -15,12 +17,13 @@ function initializeProjectList() {
             for (let j = 0; j < currentLab.projects.length; j++) {
                 const project = currentLab.projects[j];
                 console.log(`${currentLab.lab.name} -> ${project.title}`);
-                listProjects.push({
+                const newProject = {
                     "id": project.id,
                     "title": project.title,
                     "lab_id": currentLab.lab.id,
                     "lab_title": currentLab.lab.name
-                });
+                };
+                listProjects.push(newProject);
             }
         }
         // Using d3 to create the list of projects
@@ -48,9 +51,10 @@ function initializeProjectList() {
 }
 
 function updateMapList(selected_project) {
+    users = [];
     getProjectById(access_token, selected_project).then(project => {
         project.users.forEach(element => {
-            users.push({id: element.id, name: element.name});
+            users.push({ id: element.id, name: element.name });
         });
         console.log(project.missions);
         let options = d3.select("#missions-list")
@@ -77,6 +81,7 @@ function updateMapList(selected_project) {
 }
 
 function updateKitList(selected_mission) {
+    questions = [];
     getAllContentsByMissionId(access_token, selected_mission).then(mission => {
         /* 
            Remember that the kit Id is the generic kit! 
@@ -115,7 +120,7 @@ function buildContentStructure(content_id) {
     getContentById(access_token, content_id).then(content => {
         console.log(content);
         content.kit.questions.forEach(question => {
-            questions.push({id: question.id, question: question.question});
+            questions.push({ id: question.id, question: question.question });
         });
     }).then(() => {
         buildComments(content_id);
@@ -123,9 +128,10 @@ function buildContentStructure(content_id) {
 }
 
 function buildComments(content_id) {
-    rows = [];
+    preRows = [];
+    let fetches = [];
     questions.forEach(question => {
-        getParentComments(access_token, content_id, question.id).then(comments => {
+        fetches.push(getParentComments(access_token, content_id, question.id).then(comments => {
             console.log("teste");
             console.log(comments.content);
             comments.content.forEach(comment => {
@@ -138,76 +144,81 @@ function buildComments(content_id) {
                     "author": comment.author.name,
                     "comment": comment.text,
                 };
-                rows.push(row);
+                //row[question_text] = comment.text;
+                preRows.push(row);
+            });
+        }));
+    });
+    Promise.all(fetches).then(() => {
+        postRows = [];
+        console.log("Promises finished.");
+        console.log(preRows);
+        users.forEach(user => {
+            questions.forEach(question => {
+                let foundRow = preRows.find(row => row.author_id == user.id && row.question_id == question.id);
+                if (foundRow != undefined) {
+                    let currentD = postRows.find(d => d.author == user.name);
+                    if (currentD == undefined) {
+                        const newLocal = {
+                            "id": foundRow.id,
+                            "author": user.name,
+                        };
+                        newLocal[question.question] = foundRow.comment;
+                        postRows.push(newLocal);
+                    } else {
+                        currentD[question.question] = foundRow.comment;
+                    }
+                }
             });
         });
+        let random_part = Math.floor(Math.random() * postRows.length);
+        columns = ["author"].concat(questions.map(q => q.question));
+        columns = columns.map(c => {
+            const newId = `${c}_${random_part}`;
+            return { "id": newId, "label": c }
+        });
+        tabulate(postRows, columns);
     });
-    // Execute the function to build the table after all the comments are loaded
-    // buildTable();
 }
 
-function buildTable() {
-    // console.log(rows);
-    // let table = d3.select("#comments-table").selectAll("tr")
-    //     .data(rows, d => d.id);
-    // table.enter()
-    //     .append("tr")
-    //     .attr("id", (d) => { return d.id })
-    //     .attr("class", "comment-row");
-    // table.append("td")
-    //     .text((d) => { return d.author });
-    // table.append("td")
-    //     .text((d) => { return d.question });
-    // table.append("td")
-    //     .text((d) => { return d.comment });
-    // table.exit().remove();
-    // concatenate two arrays
-    let columns = ["author"].concat(questions.map(q => q.question));
-    tabulate(rows, columns);
-}
-
-function tabulate(data, columns) {
+function tabulate(output_rows, columns) {
     let table = d3.select('#my-table');
-    let thead = table.append('thead');
-    let tbody = table.append('tbody');
+    let thead = d3.select('#my-table').select('thead');
+    let tbody = d3.select('#my-table').select('tbody');
 
-    // append the header row
-    thead.append('tr')
-      .selectAll('th')
-      .data(columns)
-      .enter()
-      .append('th')
-        .text(function (column) { return column; });
+    let thread_th = thead.selectAll('th')
+        .data(columns, d => d.id);
+    thread_th
+        .enter()
+        .append('th')
+        .text(d => d.label);
+    thread_th
+        .append('th')
+        .text(d => d.label);
+    thread_th.exit().remove();
 
     // create a row for each object in the data
     let rows_ = tbody.selectAll('tr')
-      .data(data)
-      .enter()
-      .append('tr');
+        .data(output_rows, d => d.id)
+        .enter()
+        .append('tr');
 
-    // create a cell with author's comment to the corresponding question column
+    //create a cell with author's comment to the corresponding question column
     let cells_ = rows_.selectAll('td')
         .data(function (row) {
             let columns_map = columns.map(function (column) {
-                let value = row[column];
-                if (column == "author") {
-                    value = row[column];
-                } else {
-                    value = rows.find(r => r.question_id == row.question_id && r.author_id == row.author_id).comment;
-                }
-                console.log(value);
-                return {column: column, value: value};
+                return { column: column.label, value: row[column.label] };
             });
             console.log(columns_map);
             return columns_map;
-        })
-        .enter()
+        });
+    cells_.enter()
         .append('td')
-            .text(function (d) {
-                
-                    return d.value;
-                
-            });
+        .text(function (d) { return d.value; });
+    cells_
+        .append('td')
+        .text(function (d) { return d.value; });
+    cells_.exit().remove();
 
-  return table;
+    return table;
 }
