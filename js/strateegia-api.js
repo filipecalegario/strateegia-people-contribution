@@ -50,6 +50,21 @@ async function getAllContentsByMissionId(token, map_id){
     return data;    
 }
 
+async function getContentById(token, content_id){
+
+    const response = await fetch(`${API_URL}content/${content_id}`, {
+        method: 'get',
+        headers: {
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    const data = await response.json();
+
+    return data;    
+}
+
 async function getMapById(token, map_id){
 
     const response = await fetch(`${API_URL}map/${map_id}`, {
