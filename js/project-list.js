@@ -2,7 +2,6 @@ let users = [];
 let questions = [];
 let preRows = [];
 let postRows = [];
-let columns = [];
 
 function initializeProjectList() {
     getAllProjects(access_token).then(labs => {
@@ -81,7 +80,6 @@ function updateMapList(selected_project) {
 }
 
 function updateKitList(selected_mission) {
-    questions = [];
     getAllContentsByMissionId(access_token, selected_mission).then(mission => {
         /* 
            Remember that the kit Id is the generic kit! 
@@ -117,6 +115,7 @@ function setSelectedKit(kit_id) {
 }
 
 function buildContentStructure(content_id) {
+    questions = [];
     getContentById(access_token, content_id).then(content => {
         console.log(content);
         content.kit.questions.forEach(question => {
@@ -172,9 +171,10 @@ function buildComments(content_id) {
             });
         });
         let random_part = Math.floor(Math.random() * postRows.length);
-        columns = ["author"].concat(questions.map(q => q.question));
+        let columns = ["author"].concat(questions.map(q => q.question));
         columns = columns.map(c => {
-            const newId = `${c}_${random_part}`;
+            // const newId = `${c}_${random_part}`;
+            const newId = `${c}`;
             return { "id": newId, "label": c }
         });
         tabulate(postRows, columns);
@@ -198,20 +198,24 @@ function tabulate(output_rows, columns) {
     thread_th.exit().remove();
 
     // create a row for each object in the data
-    let rows_ = tbody.selectAll('tr')
-        .data(output_rows, d => d.id)
-        .enter()
+    let rows_1 = tbody.selectAll('tr')
+        .data(output_rows, d => d.id);
+    let rows_2 = rows_1.enter()
         .append('tr');
+    rows_1.append('tr');
+    rows_1.exit().remove();
 
     //create a cell with author's comment to the corresponding question column
-    let cells_ = rows_.selectAll('td')
+    let cells_ = rows_2.selectAll('td')
         .data(function (row) {
             let columns_map = columns.map(function (column) {
-                return { column: column.label, value: row[column.label] };
+                let random_part = Math.floor(Math.random()*100000);
+                let newId = `${row["id"]}_${random_part}`;
+                return { id: newId, column: column.label, value: row[column.label] };
             });
             console.log(columns_map);
             return columns_map;
-        });
+        }, d => d.id);
     cells_.enter()
         .append('td')
         .text(function (d) { return d.value; });
