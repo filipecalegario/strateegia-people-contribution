@@ -12,6 +12,7 @@
   </head>
   <body>
     <div class="container p-3">
+      <a href="index.html">back</a> | 
       lista de projetos
       <div class="d-flex flex-wrap" id="projects-container">
         projects: <select class="form-select" aria-label="Default select example" id="projects-list"></select>
@@ -40,6 +41,10 @@
       } else {
         console.log(access_token);
         initializeProjectList(access_token);
+        getUser(access_token).then(user => {
+          // Set localStorage
+          localStorage.setItem("user_id", user.id);
+        });
       }
     </script>
   </body>

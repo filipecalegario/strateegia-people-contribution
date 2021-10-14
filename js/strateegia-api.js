@@ -4,6 +4,7 @@
 
 
 const API_URL = 'https://api.strateegia.digital/projects/v1/';
+const API_USERS_URL = 'https://api.strateegia.digital/users/v1/';
 
 async function getAllProjects(token){
 
@@ -110,17 +111,17 @@ async function getCommentsGroupedByQuestionReport(token, content_id){
     return data;    
 }
 
-// async function addKitToUser(token:string, kit: any) {
-//     const JSONkit = JSON.stringify(kit);
+async function getUser(token){
 
-//     const response = await fetch(`${API_URL}`, {
-//         method: 'post',
-//         headers:{
-//             'Content-Type': 'application/json', 
-//             'Authorization': `Bearer ${token}`
-//         },
-//         body: `${JSONkit}`
-//     });
+    const response = await fetch(`${API_USERS_URL}user/me`, {
+        method: 'get',
+        headers: {
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}`
+        }
+    });
 
-//     return await response.json();
-// }
+    const data = await response.json();
+
+    return data;    
+}
