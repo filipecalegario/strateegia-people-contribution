@@ -16,8 +16,8 @@
       lista de projetos
       <div class="d-flex flex-wrap" id="projects-container">
         projects: <select class="form-select" aria-label="Default select example" id="projects-list"></select>
-        maps: <select class="form-select" aria-label="Default select example" id="missions-list"></select>
-        kits: <select class="form-select" aria-label="Default select example" id="kits-list"></select>
+        maps: <select class="form-select" aria-label="Default select example" id="maps-list"></select>
+        kits: <select class="form-select" aria-label="Default select example" id="tools-list"></select>
         <!--Insert a button to call the buildTable() function-->
         <!-- <button type="button" class="btn btn-primary" onclick="buildTable()">Build Table</button> -->
         <table id="my-table" class="table table-striped">
@@ -33,19 +33,6 @@
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="./js/strateegia-api.js"></script>
     <script src="./js/project-list.js"></script>
-    <script>
-      const access_token = localStorage.getItem("strateegia_api_token");
-      if(access_token == 'undefined') {
-        console.log("No access token");
-        window.alert("Authentication failed: No access token");
-      } else {
-        console.log(access_token);
-        initializeProjectList(access_token);
-        getUser(access_token).then(user => {
-          // Set localStorage
-          localStorage.setItem("user_id", user.id);
-        });
-      }
-    </script>
+    <script src="./js/init.js"></script>
   </body>
 </html>

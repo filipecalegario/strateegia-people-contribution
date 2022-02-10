@@ -4,7 +4,7 @@ let preRows = [];
 let postRows = [];
 
 function initializeProjectList() {
-    getAllProjects(access_token).then(labs => {
+    getAllProjects(accessToken).then(labs => {
         console.log("getAllProjects()");
         console.log(labs);
         let listProjects = [];
@@ -29,10 +29,10 @@ function initializeProjectList() {
         let options = d3.select("#projects-list")
             .on("change", () => {
                 // Print the selected project id
-                let selected_project = d3.select("#projects-list").property('value');
-                localStorage.setItem("selected_project", selected_project);
-                updateMapList(selected_project);
-                console.log(selected_project);
+                let selectedProject = d3.select("#projects-list").property('value');
+                localStorage.setItem("selectedProject", selectedProject);
+                updateMapList(selectedProject);
+                console.log(selectedProject);
             })
             .selectAll("option")
             .data(listProjects, d => d.id);
@@ -44,28 +44,31 @@ function initializeProjectList() {
             .attr("value", (d) => { return d.id })
             .text((d) => { return `${d.lab_title} -> ${d.title}` });
         options.exit().remove();
-        localStorage.setItem("selected_project", listProjects[0].id);
+        localStorage.setItem("selectedProject", listProjects[0].id);
         updateMapList(listProjects[0].id);
     });
 }
 
-function updateMapList(selected_project) {
+function updateMapList(selectedProject) {
     users = [];
-    getProjectById(access_token, selected_project).then(project => {
-        project.users.forEach(element => {
-            users.push({ id: element.id, name: element.name });
+    getProjectById(accessToken, selectedProject).then(project => {
+        console.log("getProjectById()");
+        console.log(project);
+        project.users.forEach(user => {
+            users.push({ id: user.id, name: user.name });
         });
-        console.log(project.missions);
-        let options = d3.select("#missions-list")
+        console.log("project.maps");
+        console.log(project.maps);
+        let options = d3.select("#maps-list")
             .on("change", () => {
-                // Print the selected mission id
-                let selected_mission = d3.select("#missions-list").property('value');
-                localStorage.setItem("selected_mission", selected_mission);
-                updateKitList(selected_mission);
-                console.log(selected_mission);
+                // Print the selected map id
+                let selectedMap = d3.select("#maps-list").property('value');
+                localStorage.setItem("selectedMap", selectedMap);
+                updateToolList(selectedMap);
+                console.log(selectedMap);
             })
             .selectAll("option")
-            .data(project.missions, d => d.id);
+            .data(project.maps, d => d.id);
         options.enter()
             .append("option")
             .attr("value", (d) => { return d.id })
@@ -74,63 +77,65 @@ function updateMapList(selected_project) {
             .attr("value", (d) => { return d.id })
             .text((d) => { return d.title });
         options.exit().remove();
-        localStorage.setItem("selected_mission", project.missions[0].id);
-        updateKitList(project.missions[0].id);
+        localStorage.setItem("selectedMap", project.maps[0].id);
+        updateToolList(project.maps[0].id);
     });
 }
 
-function updateKitList(selected_mission) {
-    getAllContentsByMissionId(access_token, selected_mission).then(mission => {
+function updateToolList(selectedMap) {
+    getAllDivergencePointsByMapId(accessToken, selectedMap).then(map => {
+        console.log("getAllContentsByMapId()");
+        console.log(map);
         /* 
            Remember that the kit Id is the generic kit! 
-           The content Id is the instance of that kit in the mission
+           The content Id is the instance of that kit in the map
            In this function, we are only interested in the instance of the kit
          */
-        console.log("printing mission");
-        console.log(mission);
-        let options = d3.select("#kits-list")
+
+        let options = d3.select("#tools-list")
             .on("change", () => {
                 // Print the selected kit id
-                let selected_kit = d3.select("#kits-list").property("value");
-                setSelectedKit(selected_kit);
+                let selected_kit = d3.select("#tools-list").property("value");
+                setSelectedTool(selected_kit);
             })
             .selectAll("option")
-            .data(mission.content, d => d.id);
+            .data(map.content, d => d.id);
         options.enter()
             .append("option")
             .attr("value", (d) => { return d.id })
-            .text((d) => { return d.kit.title });
+            .text((d) => { return d.tool.title });
         options.append("option")
             .attr("value", (d) => { return d.id })
-            .text((d) => { return d.kit.title });
+            .text((d) => { return d.tool.title });
         options.exit().remove();
-        let initialSelectedKit = mission.content[0].id;
-        setSelectedKit(initialSelectedKit);
+        let initialSelectedTool = map.content[0].id;
+        setSelectedTool(initialSelectedTool);
     });
 }
 
-function setSelectedKit(kit_id) {
-    localStorage.setItem("selected_kit", kit_id);
-    buildContentStructure(localStorage.getItem("selected_kit"));
+function setSelectedTool(toolId) {
+    localStorage.setItem("selectedTool", toolId);
+    buildDivergencePointStructure(localStorage.getItem("selectedTool"));
 }
 
-function buildContentStructure(content_id) {
+function buildDivergencePointStructure(divergencePointId) {
     questions = [];
-    getContentById(access_token, content_id).then(content => {
-        console.log(content);
-        content.kit.questions.forEach(question => {
+    getDivergencePointById(accessToken, divergencePointId).then(divergencePoint => {
+        console.log("getDivergencePointById()");
+        console.log(divergencePoint);
+        divergencePoint.tool.questions.forEach(question => {
             questions.push({ id: question.id, question: question.question });
         });
     }).then(() => {
-        buildComments(content_id);
+        buildComments(divergencePointId);
     });
 }
 
-function buildComments(content_id) {
+function buildComments(divergencePointId) {
     preRows = [];
     let fetches = [];
     questions.forEach(question => {
-        fetches.push(getParentComments(access_token, content_id, question.id).then(comments => {
+        fetches.push(getParentComments(accessToken, divergencePointId, question.id).then(comments => {
             console.log("teste");
             console.log(comments.content);
             comments.content.forEach(comment => {
@@ -208,13 +213,13 @@ function tabulate(output_rows, columns) {
     //create a cell with author's comment to the corresponding question column
     let cells_ = rows_2.selectAll('td')
         .data(function (row) {
-            let columns_map = columns.map(function (column) {
-                let random_part = Math.floor(Math.random()*100000);
-                let newId = `${row["id"]}_${random_part}`;
+            let columnsMap = columns.map(function (column) {
+                let randomPart = Math.floor(Math.random()*100000);
+                let newId = `${row["id"]}_${randomPart}`;
                 return { id: newId, column: column.label, value: row[column.label] };
             });
-            console.log(columns_map);
-            return columns_map;
+            console.log(columnsMap);
+            return columnsMap;
         }, d => d.id);
     cells_.enter()
         .append('td')
