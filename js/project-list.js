@@ -2,6 +2,7 @@ let users = [];
 let questions = [];
 let preRows = [];
 let postRows = [];
+let columnsGlobal = [];
 
 function initializeProjectList() {
     getAllProjects(accessToken).then(labs => {
@@ -64,7 +65,7 @@ function updateMapList(selectedProject) {
                 // Print the selected map id
                 let selectedMap = d3.select("#maps-list").property('value');
                 localStorage.setItem("selectedMap", selectedMap);
-                updateToolList(selectedMap);
+                aggregateToolQuestions(selectedMap);
                 console.log(selectedMap);
             })
             .selectAll("option")
@@ -78,13 +79,22 @@ function updateMapList(selectedProject) {
             .text((d) => { return d.title });
         options.exit().remove();
         localStorage.setItem("selectedMap", project.maps[0].id);
-        updateToolList(project.maps[0].id);
+        // updateToolList(project.maps[0].id);
+        aggregateToolQuestions(project.maps[0].id);
+    });
+}
+
+function aggregateToolQuestions(mapId){
+    getAllDivergencePointsByMapId(accessToken, mapId).then(map => {
+        map.content.forEach(divergencePoint => {
+            buildDivergencePointStructure(divergencePoint.id);
+        })
     });
 }
 
 function updateToolList(selectedMap) {
     getAllDivergencePointsByMapId(accessToken, selectedMap).then(map => {
-        console.log("getAllContentsByMapId()");
+        console.log("getAllDivergencePointsByMapId()");
         console.log(map);
         /* 
            Remember that the kit Id is the generic kit! 
@@ -119,7 +129,7 @@ function setSelectedTool(toolId) {
 }
 
 function buildDivergencePointStructure(divergencePointId) {
-    questions = [];
+    // questions = [];
     getDivergencePointById(accessToken, divergencePointId).then(divergencePoint => {
         console.log("getDivergencePointById()");
         console.log(divergencePoint);
@@ -132,7 +142,7 @@ function buildDivergencePointStructure(divergencePointId) {
 }
 
 function buildComments(divergencePointId) {
-    preRows = [];
+    // preRows = [];
     let fetches = [];
     questions.forEach(question => {
         fetches.push(getParentComments(accessToken, divergencePointId, question.id).then(comments => {
@@ -154,7 +164,7 @@ function buildComments(divergencePointId) {
         }));
     });
     Promise.all(fetches).then(() => {
-        postRows = [];
+        // postRows = [];
         console.log("Promises finished.");
         console.log(preRows);
         users.forEach(user => {
@@ -182,7 +192,8 @@ function buildComments(divergencePointId) {
             const newId = `${c}`;
             return { "id": newId, "label": c }
         });
-        tabulate(postRows, columns);
+        columnsGlobal = columns;
+        table = tabulate(postRows, columns);
     });
 }
 
@@ -213,10 +224,10 @@ function tabulate(output_rows, columns) {
     //create a cell with author's comment to the corresponding question column
     let cells_ = rows_2.selectAll('td')
         .data(function (row) {
-            let columnsMap = columns.map(function (column) {
-                let randomPart = Math.floor(Math.random()*100000);
-                let newId = `${row["id"]}_${randomPart}`;
-                return { id: newId, column: column.label, value: row[column.label] };
+                let columnsMap = columns.map(function (column) {
+                    let randomPart = Math.floor(Math.random()*100000);
+                    let newId = `${row["id"]}_${randomPart}`;
+                    return { id: newId, column: column.label, value: row[column.label] };
             });
             console.log(columnsMap);
             return columnsMap;
