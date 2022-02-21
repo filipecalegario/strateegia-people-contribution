@@ -219,7 +219,7 @@ function buildComments(divergencePointId) {
 function tabulate(data, columns) {
     let table = d3.select('#table-body');
     //add class to table
-    table.attr('class', 'table table-striped table-bordered table-hover w-75 mx-auto table-sm');
+    table.attr('class', 'table table-striped table-bordered table-hover table-sm');
     let thead = table.select('thead')
     let tbody = table.select('tbody');
 
@@ -228,18 +228,20 @@ function tabulate(data, columns) {
     thead.selectAll('tr').remove();
     thead.selectAll('th').remove();
 
+    let widthDivision = Math.floor(100 / columns.length);
+
     let header = thead.append('tr');
     columns.forEach(column => {
         if(column.supertitle !== "author"){
-            header.append('th').text(column.supertitle);
+            header.append('th').text(column.supertitle).attr('style', `width: ${widthDivision}%`);
         } else {
-            header.append('th').text("kit -> ");
+            header.append('th').text("kit → ").attr("class", "text-center").attr('style', `width: ${widthDivision}%`);;
         }
     });
 
     header = thead.append('tr');
     columns.forEach(column => {
-        header.append('th').text(column.title);
+        header.append('th').text(column.title).attr('style', `width: ${widthDivision}%`);;
     });
 
     data.forEach(function (row) {
@@ -248,12 +250,12 @@ function tabulate(data, columns) {
         // tr.attr('style', 'width:50px;height:50px');
         columns.forEach(function (column) {
             if (column.title == "author") {
-                tr.append('td').text(row[column.title]);
+                tr.append('td').text(row[column.title]).attr('style', `width: ${widthDivision}%`);;
             } else {
                 if (row[column.title] != undefined) {
-                    tr.append('td').text(row[column.title].comment);
+                    tr.append('td').text(row[column.title].comment).attr('style', `width: ${widthDivision}%`);;
                 } else {
-                    tr.append('td').text("");
+                    tr.append('td').text("").attr('style', `width: ${widthDivision}%`);;
                 }
             }
         });
