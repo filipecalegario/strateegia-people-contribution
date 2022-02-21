@@ -4,50 +4,42 @@ let preRows = [];
 let postRows = [];
 let columnsGlobal = [];
 
-function initializeProjectList() {
-    getAllProjects(accessToken).then(labs => {
-        console.log("getAllProjects()");
-        console.log(labs);
-        let listProjects = [];
-        for (let i = 0; i < labs.length; i++) {
-            let currentLab = labs[i];
-            if (currentLab.lab.name == null) {
-                currentLab.lab.name = "Personal";
-            }
-            for (let j = 0; j < currentLab.projects.length; j++) {
-                const project = currentLab.projects[j];
-                console.log(`${currentLab.lab.name} -> ${project.title}`);
-                const newProject = {
-                    "id": project.id,
-                    "title": project.title,
-                    "lab_id": currentLab.lab.id,
-                    "lab_title": currentLab.lab.name
-                };
-                listProjects.push(newProject);
-            }
+async function initializeProjectList() {
+    const labs = await getAllProjects(accessToken);
+    console.log("getAllProjects()");
+    console.log(labs);
+    let listProjects = [];
+    for (let i = 0; i < labs.length; i++) {
+        let currentLab = labs[i];
+        if (currentLab.lab.name == null) {
+            currentLab.lab.name = "Personal";
         }
-        // Using d3 to create the list of projects
-        let options = d3.select("#projects-list")
-            .on("change", () => {
-                // Print the selected project id
-                let selectedProject = d3.select("#projects-list").property('value');
-                localStorage.setItem("selectedProject", selectedProject);
-                updateMapList(selectedProject);
-                console.log(selectedProject);
-            })
-            .selectAll("option")
-            .data(listProjects, d => d.id);
-        options.enter()
-            .append("option")
-            .attr("value", (d) => { return d.id })
-            .text((d) => { return `${d.lab_title} -> ${d.title}` });
-        options.append("option")
-            .attr("value", (d) => { return d.id })
-            .text((d) => { return `${d.lab_title} -> ${d.title}` });
-        options.exit().remove();
-        localStorage.setItem("selectedProject", listProjects[0].id);
-        updateMapList(listProjects[0].id);
+        for (let j = 0; j < currentLab.projects.length; j++) {
+            const project = currentLab.projects[j];
+            const newProject = {
+                "id": project.id,
+                "title": project.title,
+                "lab_id": currentLab.lab.id,
+                "lab_title": currentLab.lab.name
+            };
+            listProjects.push(newProject);
+        }
+    }
+
+    let options = d3.select("#projects-list");
+    options.selectAll('option').remove();
+    listProjects.forEach(function (project) {
+        options.append('option').attr('value', project.id).text(`${project.lab_title} -> ${project.title}`);
     });
+    options.on("change", () => {
+        let selectedProject = d3.select("#projects-list").property('value');
+        localStorage.setItem("selectedProject", selectedProject);
+        console.log(selectedProject);
+        updateMapList(selectedProject);
+    });
+
+    localStorage.setItem("selectedProject", listProjects[0].id);
+    updateMapList(listProjects[0].id);
 }
 
 function updateMapList(selectedProject) {
@@ -84,7 +76,7 @@ function updateMapList(selectedProject) {
     });
 }
 
-function aggregateToolQuestions(mapId){
+function aggregateToolQuestions(mapId) {
     getAllDivergencePointsByMapId(accessToken, mapId).then(map => {
         map.content.forEach(divergencePoint => {
             buildDivergencePointStructure(divergencePoint.id);
@@ -128,8 +120,8 @@ function setSelectedTool(toolId) {
     buildDivergencePointStructure(localStorage.getItem("selectedTool"));
 }
 
-function buildDivergencePointStructure(divergencePointId) {
-    // questions = [];
+function buildDivergencePointStructure_(divergencePointId) {
+    questions = [];
     getDivergencePointById(accessToken, divergencePointId).then(divergencePoint => {
         console.log("getDivergencePointById()");
         console.log(divergencePoint);
@@ -141,8 +133,19 @@ function buildDivergencePointStructure(divergencePointId) {
     });
 }
 
+async function buildDivergencePointStructure(divergencePointId) {
+    questions = [];
+    const divergencePoint = await getDivergencePointById(accessToken, divergencePointId);
+    console.log("getDivergencePointById()");
+    console.log(divergencePoint);
+    divergencePoint.tool.questions.forEach(question => {
+        questions.push({ id: question.id, question: question.question, kit: divergencePoint.tool.title });
+    });
+    buildComments(divergencePointId);
+}
+
 function buildComments(divergencePointId) {
-    // preRows = [];
+    preRows = [];
     let fetches = [];
     questions.forEach(question => {
         fetches.push(getParentComments(accessToken, divergencePointId, question.id).then(comments => {
@@ -164,7 +167,7 @@ function buildComments(divergencePointId) {
         }));
     });
     Promise.all(fetches).then(() => {
-        // postRows = [];
+        postRows = [];
         console.log("Promises finished.");
         console.log(preRows);
         users.forEach(user => {
@@ -187,58 +190,87 @@ function buildComments(divergencePointId) {
         });
         let random_part = Math.floor(Math.random() * postRows.length);
         let columns = ["author"].concat(questions.map(q => q.question));
-        columns = columns.map(c => {
-            // const newId = `${c}_${random_part}`;
-            const newId = `${c}`;
-            return { "id": newId, "label": c }
-        });
-        columnsGlobal = columns;
+        // columns = columns.map(c => {
+        //     // const newId = `${c}_${random_part}`;
+        //     const newId = `${c}`;
+        //     return { "id": newId, "label": c }
+        // });
+        // columnsGlobal = columns;
         table = tabulate(postRows, columns);
     });
 }
 
-function tabulate(output_rows, columns) {
-    let table = d3.select('#my-table');
-    let thead = d3.select('#my-table').select('thead');
-    let tbody = d3.select('#my-table').select('tbody');
+function tabulate(data, columns) {
+    let table = d3.select('#table-body');
+    //add class to table
+    table.attr('class', 'table table-striped table-bordered table-hover w-75 mx-auto table-sm');
+    let thead = table.select('thead')
+    let tbody = table.select('tbody');
 
-    let thread_th = thead.selectAll('th')
-        .data(columns, d => d.id);
-    thread_th
-        .enter()
-        .append('th')
-        .text(d => d.label);
-    thread_th
-        .append('th')
-        .text(d => d.label);
-    thread_th.exit().remove();
+    tbody.selectAll('tr').remove();
+    tbody.selectAll('td').remove();
+    thead.selectAll('tr').remove();
+    thead.selectAll('th').remove();
 
-    // create a row for each object in the data
-    let rows_1 = tbody.selectAll('tr')
-        .data(output_rows, d => d.id);
-    let rows_2 = rows_1.enter()
-        .append('tr');
-    rows_1.append('tr');
-    rows_1.exit().remove();
+    let header = thead.append('tr');
+    columns.forEach(column => {
+        header.append('th').text(column);
+    });
 
-    //create a cell with author's comment to the corresponding question column
-    let cells_ = rows_2.selectAll('td')
-        .data(function (row) {
-                let columnsMap = columns.map(function (column) {
-                    let randomPart = Math.floor(Math.random()*100000);
-                    let newId = `${row["id"]}_${randomPart}`;
-                    return { id: newId, column: column.label, value: row[column.label] };
-            });
-            console.log(columnsMap);
-            return columnsMap;
-        }, d => d.id);
-    cells_.enter()
-        .append('td')
-        .text(function (d) { return d.value; });
-    cells_
-        .append('td')
-        .text(function (d) { return d.value; });
-    cells_.exit().remove();
+    data.forEach(function (row) {
+        let tr = tbody.append('tr');
+        //make all tr the same size
+        // tr.attr('style', 'width:50px;height:50px');
+        columns.forEach(function (column) {
+            tr.append('td').text(row[column]);
+        });
+    });
 
     return table;
+
+
+    // let table = d3.select('#my-table');
+    // let thead = d3.select('#my-table').select('thead');
+    // let tbody = d3.select('#my-table').select('tbody');
+
+    // let thread_th = thead.selectAll('th')
+    //     .data(columns, d => d.id);
+    // thread_th
+    //     .enter()
+    //     .append('th')
+    //     .text(d => d.label);
+    // thread_th
+    //     .append('th')
+    //     .text(d => d.label);
+    // thread_th.exit().remove();
+
+    // // create a row for each object in the data
+    // let rows_1 = tbody.selectAll('tr')
+    //     .data(output_rows, d => d.id);
+    // // #tocheck: why rows_2???
+    // let rows_2 = rows_1.enter()
+    //     .append('tr');
+    // rows_1.append('tr');
+    // rows_1.exit().remove();
+
+    // //create a cell with author's comment to the corresponding question column
+    // let cells_ = rows_2.selectAll('td')
+    //     .data(function (row) {
+    //         let columnsMap = columns.map(function (column) {
+    //             let randomPart = Math.floor(Math.random() * 100000);
+    //             let newId = `${row["id"]}_${randomPart}`;
+    //             return { id: newId, column: column.label, value: row[column.label] };
+    //         });
+    //         console.log(columnsMap);
+    //         return columnsMap;
+    //     }, d => d.id);
+    // cells_.enter()
+    //     .append('td')
+    //     .text(function (d) { return d.value; });
+    // cells_
+    //     .append('td')
+    //     .text(function (d) { return d.value; });
+    // cells_.exit().remove();
+
+    // return table;
 }
