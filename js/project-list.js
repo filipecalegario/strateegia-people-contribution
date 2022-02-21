@@ -139,7 +139,7 @@ async function buildDivergencePointStructure(divergencePointId) {
     console.log("getDivergencePointById()");
     console.log(divergencePoint);
     divergencePoint.tool.questions.forEach(question => {
-        questions.push({ id: question.id, question: question.question, kit: divergencePoint.tool.title });
+        questions.push({ id: question.id, question: question.question, kit: divergencePoint.tool.title, kit_row: divergencePoint.position.row, kit_col: divergencePoint.position.col });
     });
     buildComments(divergencePointId);
 }
@@ -160,6 +160,7 @@ function buildComments(divergencePointId) {
                     "author_id": comment.author.id,
                     "author": comment.author.name,
                     "comment": comment.text,
+                    "kit_title": question_text.kit,
                 };
                 //row[question_text] = comment.text;
                 preRows.push(row);
@@ -180,16 +181,31 @@ function buildComments(divergencePointId) {
                             "id": foundRow.id,
                             "author": user.name,
                         };
-                        newLocal[question.question] = foundRow.comment;
+                        newLocal[question.question] = { comment: foundRow.comment, kit_title: question.kit_title };
                         postRows.push(newLocal);
                     } else {
-                        currentD[question.question] = foundRow.comment;
+                        currentD[question.question] = { comment: foundRow.comment, kit_title: question.kit_title };
                     }
                 }
             });
         });
         let random_part = Math.floor(Math.random() * postRows.length);
-        let columns = ["author"].concat(questions.map(q => q.question));
+        questions.sort((a, b) => {
+            if (a.kit_row < b.kit_row) {
+                return -1;
+            }
+            if (a.kit_row > b.kit_row) {
+                return 1;
+            }
+            if (a.kit_col < b.kit_col) {
+                return -1;
+            }
+            if (a.kit_col > b.kit_col) {
+                return 1;
+            }
+            return 0;
+        });
+        let columns = [{supertitle:"author", title:"author"}].concat(questions.map(q => {return {supertitle: q.kit, title: q.question}}));
         // columns = columns.map(c => {
         //     // const newId = `${c}_${random_part}`;
         //     const newId = `${c}`;
@@ -214,7 +230,16 @@ function tabulate(data, columns) {
 
     let header = thead.append('tr');
     columns.forEach(column => {
-        header.append('th').text(column);
+        if(column.supertitle !== "author"){
+            header.append('th').text(column.supertitle);
+        } else {
+            header.append('th').text("kit -> ");
+        }
+    });
+
+    header = thead.append('tr');
+    columns.forEach(column => {
+        header.append('th').text(column.title);
     });
 
     data.forEach(function (row) {
@@ -222,7 +247,15 @@ function tabulate(data, columns) {
         //make all tr the same size
         // tr.attr('style', 'width:50px;height:50px');
         columns.forEach(function (column) {
-            tr.append('td').text(row[column]);
+            if (column.title == "author") {
+                tr.append('td').text(row[column.title]);
+            } else {
+                if (row[column.title] != undefined) {
+                    tr.append('td').text(row[column.title].comment);
+                } else {
+                    tr.append('td').text("");
+                }
+            }
         });
     });
 
