@@ -30,8 +30,12 @@
 
 <body>
   <div class="container p-3">
-    <a href="index.html">back</a> |
-    lista de projetos
+    <div class="container p-3">
+      <a href="index.html">logout</a>
+    </div>
+    <div class="row input-group mb-2">
+      <h3>contribuições das pessoas</h3>
+    </div>
     <div class="d-flex flex-wrap" id="projects-container">
       projects: <select class="form-select" aria-label="Default select example" id="projects-list"></select>
       maps: <select class="form-select" aria-label="Default select example" id="maps-list"></select>
@@ -41,7 +45,8 @@
     </div>
     <br>
     <div class="d-flex flex-row-reverse">
-      <button type="button" class="btn btn-secondary btn-sm" id="main-button" onclick="exportTableAsCsv('table-body')">Export CSV</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="main-button"
+        onclick="exportTableAsCsv('table-body')">Export CSV</button>
     </div>
     <table id="table-body" style="margin: 10px">
       <thead id="my-table-head"></thead>
