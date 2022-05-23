@@ -36,9 +36,11 @@ async function initializeProjectList() {
         localStorage.setItem("selectedProject", selectedProject);
         console.log(selectedProject);
         updateMapList(selectedProject);
+        d3.select("#project-link").attr("href", `https://app.strateegia.digital/journey/${selectedProject}`);
     });
 
     localStorage.setItem("selectedProject", listProjects[0].id);
+    d3.select("#project-link").attr("href", `https://app.strateegia.digital/journey/${listProjects[0].id}`);
     updateMapList(listProjects[0].id);
 }
 
@@ -205,7 +207,7 @@ function buildComments(divergencePointId) {
             }
             return 0;
         });
-        let columns = [{supertitle:"author", title:"author"}].concat(questions.map(q => {return {supertitle: q.kit, title: q.question}}));
+        let columns = [{ supertitle: "author", title: "author" }].concat(questions.map(q => { return { supertitle: q.kit, title: q.question } }));
         // columns = columns.map(c => {
         //     // const newId = `${c}_${random_part}`;
         //     const newId = `${c}`;
@@ -232,7 +234,7 @@ function tabulate(data, columns) {
 
     let header = thead.append('tr');
     columns.forEach(column => {
-        if(column.supertitle !== "author"){
+        if (column.supertitle !== "author") {
             header.append('th').text(column.supertitle).attr('style', `width: ${widthDivision}%`);
         } else {
             header.append('th').text("kit → ").attr("class", "text-center").attr('style', `width: ${widthDivision}%`);;
