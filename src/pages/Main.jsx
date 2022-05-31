@@ -14,6 +14,7 @@ export default function Main() {
   const [accessToken, setAccessToken] = useState("");
   const [mapDetails, setMapDetails] = useState(null);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [firstMap, setFirstMap] = useState(null);
 
   const handleSelectChange = (e) => {
     setSelectedProject(e.target.value);
@@ -75,17 +76,29 @@ export default function Main() {
   return (
     <Box padding={10} id='top'>
 
-      <Heading as="h3" size="md" mb={3} >
-        contribuições das pessoas
-      </Heading>
-      <ProjectList handleSelectChange={handleSelectChange} />
+      <Box display='flex' >
+        <ProjectList handleSelectChange={handleSelectChange} />
+        <Link 
+          href={`https://app.strateegia.digital/journey/${selectedProject}/map/${firstMap}`}
+          target='_blank'
+          bg='#E9ECEF'
+          borderRadius={' 0 6px 6px 0 '}
+          fontSize={16}
+          w={200} h='40px'
+          display='flex'
+          alignItems='center'
+          justifyContent='center'
+        >
+          link para a jornada
+        </Link>
+      </Box>
       <MapList
         projectId={selectedProject}
         handleSelectChange={handleMapSelectChange}
       />
       
       <Loading active={isLoading} />
-      <Heading as="h3" size="md" mb={3} >
+      <Heading as="h3" size="md" mb={3} mt={3} >
         contribuições das pessoas
       </Heading>
       {mapDetails?.points ? (
