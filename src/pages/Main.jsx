@@ -1,4 +1,4 @@
-import { Box, Heading, Link, Text, UnorderedList } from "@chakra-ui/react";
+import { Box, Heading, Link } from "@chakra-ui/react";
 import { MdArrowUpward } from "react-icons/md";
 import { useEffect, useState } from "react";
 import * as api from "strateegia-api";
@@ -6,6 +6,7 @@ import Loading from "../components/Loading";
 import MapList from "../components/MapList";
 import ProjectList from "../components/ProjectList";
 import DivPointByMapId from "../components/DivPointByMapId";
+import { i18n } from "../translate/i18n";
 
 export default function Main() {
   const [selectedProject, setSelectedProject] = useState("");
@@ -14,9 +15,21 @@ export default function Main() {
   const [accessToken, setAccessToken] = useState("");
   const [mapDetails, setMapDetails] = useState(null);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [firstMap, setFirstMap] = useState(null);
 
   const handleSelectChange = (e) => {
     setSelectedProject(e.target.value);
+    async function fetchMapList() {
+      try {
+        const accessToken = localStorage.getItem("accessToken");
+        const project = await api.getProjectById(accessToken, e.target.value);
+        setFirstMap(project.maps[0].id);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchMapList();
+    setSelectedMap('');
   };
 
   const handleMapSelectChange = (e) => {
@@ -64,17 +77,32 @@ export default function Main() {
 
   return (
     <Box padding={10} id='top'>
-
-      <Heading as="h3" size="md" mb={3} >
-        contribuições das pessoas
-      </Heading>
-      <ProjectList handleSelectChange={handleSelectChange} />
+     <Box display="flex">
+        <ProjectList disabled handleSelectChange={handleSelectChange} />
+        <Link
+          pointerEvents={selectedProject?.length > 0 ? '' : 'none'}
+          href={selectedProject?.length > 0 ? `https://app.strateegia.digital/journey/${selectedProject}/map/${firstMap}` : '' }
+          target="_blank"
+          bg="#E9ECEF"
+          borderRadius={" 0 6px 6px 0 "}
+          fontSize={16}
+          w={200}
+          h="40px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          {i18n.t('main.link')}
+        </Link>
+      </Box>
       <MapList
         projectId={selectedProject}
         handleSelectChange={handleMapSelectChange}
       />
-      
       <Loading active={isLoading} />
+      <Heading as="h3" size="md" mb={3} mt={3} >
+        contribuições das pessoas
+      </Heading>
       {mapDetails?.points ? (
         <Box mt={'25px'}>
           
