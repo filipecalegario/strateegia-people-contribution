@@ -7,6 +7,7 @@ import MapList from "../components/MapList";
 import ProjectList from "../components/ProjectList";
 import DivPointByMapId from "../components/DivPointByMapId";
 import { i18n } from "../translate/i18n";
+import { fetchMapsById } from "../components/indicators";
 
 export default function Main() {
   const [selectedProject, setSelectedProject] = useState("");
@@ -19,6 +20,7 @@ export default function Main() {
 
   const handleSelectChange = (e) => {
     setSelectedProject(e.target.value);
+    setIsLoading(true);
     async function fetchMapList() {
       try {
         const accessToken = localStorage.getItem("accessToken");
@@ -28,28 +30,26 @@ export default function Main() {
         console.log(error);
       }
     }
+    setSelectedMap(null);
     fetchMapList();
-    setSelectedMap('');
   };
 
-  const handleMapSelectChange = (e) => {
-    setSelectedMap(e.target.value);
+  const handleMapSelectChange = (value) => {
+    setIsLoading(false);
+    setSelectedMap(value);
   };
 
   useEffect(() => {
     setMapDetails(null);
-    setSelectedMap("");
+    setSelectedMap(null);
   }, [selectedProject]);
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const response = await api.getMapById(accessToken, selectedMap);
+        const response = await fetchMapsById(accessToken, selectedMap, api.getMapById);
         setMapDetails({ ...response });
-        console.log("mapDetails: %o", mapDetails);
-        // [TODO] - use the access token to fetch the data
-        // [TODO] - add the fetch data function here
       } catch (error) {
         console.log(error);
       }
@@ -57,7 +57,7 @@ export default function Main() {
     }
     fetchData();
   }, [selectedMap]);
-
+  
   useEffect(() => {
     setAccessToken(localStorage.getItem("accessToken"));
   }, []);
@@ -69,7 +69,6 @@ export default function Main() {
 
   useEffect(() => {
       window.addEventListener('scroll', handleScroll, { passive: true });
-
       return () => {
           window.removeEventListener('scroll', handleScroll);
       };
@@ -101,14 +100,13 @@ export default function Main() {
       />
       <Loading active={isLoading} />
       <Heading as="h3" size="md" mb={3} mt={3} >
-        contribuições das pessoas
+        {i18n.t('main.heading')}
       </Heading>
-      {mapDetails?.points ? (
+      {selectedMap !== null && (
         <Box mt={'25px'}>
-          
           <DivPointByMapId mapId={selectedMap}/>
         </Box>
-      ) : null}
+      )}
       {scrollPosition > 500 && <Link href='#top'>
           <Box position='fixed'
               bottom='20px'

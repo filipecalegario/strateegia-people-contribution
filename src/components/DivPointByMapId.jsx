@@ -3,18 +3,35 @@ import { Heading, Box, Text, List, ListItem, ListIcon, Link } from "@chakra-ui/r
 import { ChevronRightIcon } from '@chakra-ui/icons'
 
 import * as api from "strateegia-api";
+import { fetchMapsById } from "./indicators";
 
 
 export default function DivPointByMapId({ mapId }) {
     const accessToken = localStorage.getItem("accessToken");
     const [kits, setKits] = useState([]);
     const [comments, setComments] = useState([]);
-  
+    const [content, setContent] = useState([]);
+    
     useEffect(() => {
-        api.getAllDivergencePointsByMapId(accessToken, mapId).then((data) => {
-            const kitsArr = []
-            setKits([])
-            data.content.map((cont) => {
+        console.log("🚀 ~ file: DivPointByMapId.jsx ~ line 10 ~ DivPointByMapId ~ mapId", mapId)
+        async function getAllDivPointsByMapId() {
+            const result = await fetchMapsById(accessToken, mapId, api.getAllDivergencePointsByMapId);
+            const content = result.length > 1 ? result.map(({content}) => content.flat()) : result.content;
+            // console.log("🚀 ~ file: DivPointByMapId.jsx ~ line 20 ~ getAllDivPointsByMapId ~ result.length", result.length)
+            // console.log("🚀 ~ file: DivPointByMapId.jsx ~ line 19 ~ getAllDivPointsByMapId ~ content",content, content.flat());
+            return content.flat();
+        }
+
+        getAllDivPointsByMapId().then(data => {
+            console.log("🚀 ~ file: DivPointByMapId.jsx ~ line 38 ~ getAllDivPointsByMapId ~ data", data)
+            setContent(data || ['oi'])
+        });
+    }, [mapId]);
+
+    useEffect(() => {
+        console.log("🚀 ~ file: DivPointByMapId.jsx ~ line 47 ~ content.map ~ content", content)
+        const kitsArr = [];
+            content.map((cont) => {
                 kitsArr.push({
                     divPointId: cont.id,
                     kitId: cont.tool.id,
@@ -23,8 +40,7 @@ export default function DivPointByMapId({ mapId }) {
                 })
             })
             setKits(kitsArr);
-        });
-    }, [mapId]);
+    }, [content])
 
     useEffect(() => {
         kits.map(kit => 
@@ -48,7 +64,7 @@ export default function DivPointByMapId({ mapId }) {
         <>
             <Box>
                 <Heading as="h2" size="lg" m={'15px 2px'}>Índice</Heading>
-                <List spacing={3} display='flex' flexDir='column' flexWrap='wrap' maxHeight='200px'>
+                <List spacing={3} maxW='80vw' display='flex' flexDir='column' flexWrap='wrap'  >
                     {kits.map(({kitTitle, kitId}) => (
                         <ListItem>
                             <Link href={`#${kitId}`}>
