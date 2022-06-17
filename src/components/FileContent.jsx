@@ -4,6 +4,43 @@ import PizZipUtils from "pizzip/utils/index.js";
 import { reportsCockpit } from '../assets/file' 
 import { saveAs } from "file-saver"; 
 
+
+export const getCsvData = async (kits, comments) => {
+    const kitInfo = await Promise.all(
+        kits?.map(({ mapId, kitId, divPointId, kitTitle }) =>
+        {
+            return {
+                mapId: mapId,
+                kitId: kitId,
+                divPointId: divPointId,
+                kitTitle: kitTitle,
+            }      
+        })
+    ).then(data => {
+        return data.flat()
+    });
+
+    const kitQuestions = await Promise.all(
+        kits?.map(({ questions }) =>
+        {
+            return questions.map(({question, id}) => {
+                return {
+                    questionId: id,
+                    question: question,
+                }      
+            })
+        })
+    ).then(data => {
+        return data.flat()
+    });
+
+    const kitsCSV = kits?.map( (cmt, index) => {
+        return {...kitInfo[index], ...kitQuestions[index], comment: comments.filter(comment => cmt.kitTitle === comment.kitTitle).map(({text, author}) => author.name + ': ' + text)};
+    });
+    console.log("🚀 ~ file: FileContent.jsx ~ line 40 ~ kitsCSV ~ kitsCSV", kitsCSV);
+    return kitsCSV;
+}
+
 function loadFile(url, callback) {
     PizZipUtils.getBinaryContent(url, callback);
 }

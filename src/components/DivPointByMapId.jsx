@@ -7,7 +7,7 @@ import Loading from "../components/Loading";
 
 import * as api from "strateegia-api";
 import { fetchMapsById } from "./indicators";
-import { generateDocument } from "./FileContent";
+import { getCsvData, generateDocument } from "./FileContent";
 
 
 export default function DivPointByMapId({ mapId, isLoading }) {
@@ -15,6 +15,7 @@ export default function DivPointByMapId({ mapId, isLoading }) {
     const [kits, setKits] = useState([]);
     const [comments, setComments] = useState([]);
     const [content, setContent] = useState([]);
+    const [csv, setCsv] = useState([]);
     
     useEffect(() => {
         
@@ -61,9 +62,16 @@ export default function DivPointByMapId({ mapId, isLoading }) {
         
     }, [kits]);
 
+    useEffect(() => {
+        getCsvData(kits, comments).then(data => {
+            setCsv(data)
+            // console.log("🚀 ~ file: DivPointByMapId.jsx ~ line 67 ~ useEffect ~ data", data)
+        });
+    }, [comments])
+    
     return (
         <>
-            <ExportsButtons data={kits || ''} saveFile={() => generateDocument(mapId, kits, comments)} project={kits}/>
+            <ExportsButtons data={csv} saveFile={() => generateDocument(mapId, kits, comments)} project={kits}/>
             <Loading active={isLoading} />
             <Heading as="h3" size="md" mb={3} mt={3} >
                 {i18n.t('main.heading')}
