@@ -27,7 +27,6 @@ export default function Signin() {
     try {
       const accessToken = await auth(email, password);
       if (accessToken) {
-        console.log(accessToken);
         localStorage.setItem("accessToken", accessToken);
         navigate("/main");
       } else {

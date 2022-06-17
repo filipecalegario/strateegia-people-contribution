@@ -65,7 +65,6 @@ export default function DivPointByMapId({ mapId, isLoading }) {
     useEffect(() => {
         getCsvData(kits, comments).then(data => {
             setCsv(data)
-            // console.log("🚀 ~ file: DivPointByMapId.jsx ~ line 67 ~ useEffect ~ data", data)
         });
     }, [comments])
     

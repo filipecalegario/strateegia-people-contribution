@@ -51,7 +51,7 @@ export default function MapList({ projectId, handleSelectChange }) {
       onChange={ selected => {
         setAllSelected(false)
         setSelected(selected)
-        selected.find(option => option.label === i18n.t('mapList.list')) ? 
+        selected.find(option => option.label === i18n.t('selector.list')) ? 
           changeSelectAll()
         : handleSelectChange(selected);
       }} 

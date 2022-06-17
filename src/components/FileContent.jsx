@@ -37,7 +37,6 @@ export const getCsvData = async (kits, comments) => {
     const kitsCSV = kits?.map( (cmt, index) => {
         return {...kitInfo[index], ...kitQuestions[index], comment: comments.filter(comment => cmt.kitTitle === comment.kitTitle).map(({text, author}) => author.name + ': ' + text)};
     });
-    console.log("🚀 ~ file: FileContent.jsx ~ line 40 ~ kitsCSV ~ kitsCSV", kitsCSV);
     return kitsCSV;
 }
 
