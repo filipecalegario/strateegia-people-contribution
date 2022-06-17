@@ -1,14 +1,14 @@
 import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
 import PizZipUtils from "pizzip/utils/index.js";
-import { reportsCockpit } from '../assets/files' 
+import { reportsCockpit } from '../assets/file' 
 import { saveAs } from "file-saver"; 
 
 function loadFile(url, callback) {
     PizZipUtils.getBinaryContent(url, callback);
 }
 
-export const generateDocument = (usersScore) => {
+export const generateDocument = (mapId, kits, comments) => {
 
     loadFile(
         reportsCockpit,
@@ -21,40 +21,38 @@ export const generateDocument = (usersScore) => {
                 paragraphLoop: true,
                 linebreaks: true,
             });
-
-            const docData = usersScore.map((user, i) => {
-                const blueRow = {
-                    'hasBlue': true,
-                    'hasWhite': false,
-                    'name': user.name,
-                    'metrica1': user.metrica1,
-                    'metrica2': user.metrica2,
-                    'score': user.score,
-                };
-                const whiteRow = {
-                    'hasBlue': false,
-                    'hasWhite': true,
-                    'name_2': user.name,
-                    'metrica1_2': user.metrica1,
-                    'metrica2_2': user.metrica2,
-                    'score_2': user.score,
-                };
-
-                return i % 2 == 0 ? blueRow : whiteRow;
-            
+            const docData = []
+            mapId.map(({label, value}) => {
+                const data = {
+                    map_title: label,
+                    questions: kits.filter(({mapId}) => mapId === value)
+                    .map(({kitTitle, questions}) => {
+                        return {
+                            kit_title: kitTitle,
+                            question_title: questions.map(({question}) => question),
+                            comments: comments.filter(kit => kit.kitTitle === kitTitle)
+                            .map(({author, text}) => {
+                                return {
+                                    user: author.name + ':',
+                                    comment: text
+                                }
+                            })
+                        }
+                    })
+                }
+                docData.push(data)   
             });
 
             doc.render({
-                'influencers': docData
+                'map': docData.flat()
             });
 
             const out = doc.getZip().generate({
                 type: "blob",
                 mimeType:
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            }); //Output the document using Data-URI
-            saveAs(out, "strateegia_influential_report-docx.docx");
+            }); 
+            saveAs(out, "strateegia_kit_visual_structure-docx.docx");
         }
     );
-
 }

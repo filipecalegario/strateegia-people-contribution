@@ -7,6 +7,7 @@ import Loading from "../components/Loading";
 
 import * as api from "strateegia-api";
 import { fetchMapsById } from "./indicators";
+import { generateDocument } from "./FileContent";
 
 
 export default function DivPointByMapId({ mapId, isLoading }) {
@@ -19,7 +20,6 @@ export default function DivPointByMapId({ mapId, isLoading }) {
         
         async function getAllDivPointsByMapId() {
             const result = await fetchMapsById(accessToken, mapId, api.getAllDivergencePointsByMapId);
-            console.log("🚀 ~ file: DivPointByMapId.jsx ~ line 21 ~ getAllDivPointsByMapId ~ result", result)
             const content = result.length > 1 ? result.map(({content}) => content.flat()) : result.content;
             return content.flat();
         }
@@ -58,13 +58,12 @@ export default function DivPointByMapId({ mapId, isLoading }) {
                     });
                 })
             }))
-        console.log("🚀 ~ file: DivPointByMapId.jsx ~ line 60 ~ useEffect ~ kits", kits)
         
     }, [kits]);
 
     return (
         <>
-            <ExportsButtons data={kits || ''} saveFile={() => console.log('aqui sallvará docx')} project={kits}/>
+            <ExportsButtons data={kits || ''} saveFile={() => generateDocument(mapId, kits, comments)} project={kits}/>
             <Loading active={isLoading} />
             <Heading as="h3" size="md" mb={3} mt={3} >
                 {i18n.t('main.heading')}
