@@ -8,6 +8,7 @@ import ProjectList from "../components/ProjectList";
 import DivPointByMapId from "../components/DivPointByMapId";
 import { i18n } from "../translate/i18n";
 import { fetchMapsById } from "../components/indicators";
+import { ExportsButtons } from "../components/ExportsButtons";
 
 export default function Main() {
   const [selectedProject, setSelectedProject] = useState("");
@@ -98,13 +99,9 @@ export default function Main() {
         projectId={selectedProject}
         handleSelectChange={handleMapSelectChange}
       />
-      <Loading active={isLoading} />
-      <Heading as="h3" size="md" mb={3} mt={3} >
-        {i18n.t('main.heading')}
-      </Heading>
       {selectedMap !== null && (
         <Box mt={'25px'}>
-          <DivPointByMapId mapId={selectedMap}/>
+          <DivPointByMapId mapId={selectedMap} isLoading={isLoading}/>
         </Box>
       )}
       {scrollPosition > 500 && <Link href='#top'>
