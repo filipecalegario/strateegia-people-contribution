@@ -88,7 +88,7 @@ export const generateDocument = (mapId, kits, comments) => {
                 mimeType:
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             }); 
-            saveAs(out, "strateegia_kit_visual_structure-docx.docx");
+            saveAs(out, "strateegia_people_contribution-docx.docx");
         }
     );
 }
