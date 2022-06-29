@@ -1,21 +1,40 @@
 import { useState, useEffect } from "react";
 import { Heading, Box, Text, List, ListItem, ListIcon, Link } from "@chakra-ui/react";
 import { ChevronRightIcon } from '@chakra-ui/icons'
+import { i18n } from "../translate/i18n";
+import { ExportsButtons } from "../components/ExportsButtons";
+import Loading from "../components/Loading";
 
 import * as api from "strateegia-api";
+import { fetchMapsById } from "./indicators";
+import { getCsvData, generateDocument } from "./FileContent";
 
 
-export default function DivPointByMapId({ mapId }) {
+export default function DivPointByMapId({ mapId, isLoading }) {
     const accessToken = localStorage.getItem("accessToken");
     const [kits, setKits] = useState([]);
     const [comments, setComments] = useState([]);
-  
+    const [content, setContent] = useState([]);
+    const [csv, setCsv] = useState([]);
+    
     useEffect(() => {
-        api.getAllDivergencePointsByMapId(accessToken, mapId).then((data) => {
-            const kitsArr = []
-            setKits([])
-            data.content.map((cont) => {
+        
+        async function getAllDivPointsByMapId() {
+            const result = await fetchMapsById(accessToken, mapId, api.getAllDivergencePointsByMapId);
+            const content = result.length > 1 ? result.map(({content}) => content.flat()) : result.content;
+            return content.flat();
+        }
+
+        getAllDivPointsByMapId().then(data => {
+            setContent(data)
+        });
+    }, [mapId]);
+
+    useEffect(() => {
+        const kitsArr = [];
+            content.map((cont) => {
                 kitsArr.push({
+                    mapId: cont.map_id,
                     divPointId: cont.id,
                     kitId: cont.tool.id,
                     kitTitle: cont.tool.title,
@@ -23,8 +42,7 @@ export default function DivPointByMapId({ mapId }) {
                 })
             })
             setKits(kitsArr);
-        });
-    }, [mapId]);
+    }, [content])
 
     useEffect(() => {
         kits.map(kit => 
@@ -41,42 +59,65 @@ export default function DivPointByMapId({ mapId }) {
                     });
                 })
             }))
-           
+        
     }, [kits]);
 
+    useEffect(() => {
+        getCsvData(kits, comments).then(data => {
+            setCsv(data)
+        });
+    }, [comments])
+    
     return (
         <>
-            <Box>
-                <Heading as="h2" size="lg" m={'15px 2px'}>Índice</Heading>
-                <List spacing={3} display='flex' flexDir='column' flexWrap='wrap' maxHeight='200px'>
-                    {kits.map(({kitTitle, kitId}) => (
-                        <ListItem>
-                            <Link href={`#${kitId}`}>
-                                <ListIcon as={ChevronRightIcon} color='blue'/>
-                                {kitTitle}
-                            </Link>
-                        </ListItem>
-                    ))}
-                </List>
-            </Box>
-            <Box mt='50px' display='flex' flexDir='column' alignItems='center'>
-                {kits.map(({kitTitle, questions, kitId}) => (
-                    <>
-                        <Heading as="h2" size="lg" m={'10px 2px'} id={kitId}>Kit: {kitTitle}</Heading>
-                        {questions.map(({question}) => (
+            <ExportsButtons data={csv} saveFile={() => generateDocument(mapId, kits, comments)} project={kits}/>
+            <Loading active={isLoading} />
+            <Heading as="h3" size="md" mb={3} mt={3} >
+                {i18n.t('main.heading')}
+            </Heading>
+            {mapId.length > 0 && (
+                <>
+                    <Box>
+                        <Heading as="h2" size="lg" m={'15px 2px'}>Índice</Heading>
+                        <List spacing={3} maxW='80vw' display='flex' flexDir='column' flexWrap='wrap'  >
+                        {kits.map(({kitTitle, kitId}) => (
+                            <ListItem>
+                                <Link href={`#${kitId}`}>
+                                    <ListIcon as={ChevronRightIcon} color='blue'/>
+                                    {kitTitle}
+                                </Link>
+                            </ListItem>
+                        ))}
+                        </List>
+                    </Box>
+                    <Box mt='50px' display='flex' flexDir='column'>
+
+                        {
+                        mapId.map(({label, value}) => (
                             <>
-                            <Text fontSize={'24px'} fontWeight='600' m='30px 0' w='40%' textAlign='center'>Questão: {question}</Text>
-                            {comments.filter(kit => kit.kitTitle === kitTitle)
-                                .map(({author, text}) => (
+                                <Heading as="h1" fontSize={'24px'} fontWeight='400'>mapa: {label.toLowerCase()}</Heading>
+                                {kits.filter(({mapId}) => mapId === value)
+                                .map(({kitTitle, questions, kitId}) => (
                                     <>
-                                        <Text m='12px' w='60%'><strong>{author.name}</strong>: {text}</Text>
+                                        <Heading as="h2" fontSize={'24px'} mt={5} id={kitId}>kit: {kitTitle}</Heading>
+                                        {questions.map(({question}) => (
+                                            <>
+                                            <Heading as='h3' fontSize={'24px'} fontWeight='600' m='30px 0' w='60%'>Questão: {question}</Heading>
+                                            {comments.filter(kit => kit.kitTitle === kitTitle)
+                                                .map(({author, text}) => (
+                                                    <>
+                                                        <Text mt='12px' w='60%'><strong>{author.name}</strong>: {text}</Text>
+                                                    </>
+                                                ))}
+                                            </>
+                                        ))}
                                     </>
                                 ))}
                             </>
                         ))}
-                    </>
-                ))}
-            </Box>
+                    </Box>
+                </>
+            )}
         </>
     )
 
