@@ -15,11 +15,13 @@ export default function DivPointByMapId({ mapId }) {
             const kitsArr = []
             setKits([])
             data.content.map((cont) => {
+                console.log(cont.incognito_mode)
                 kitsArr.push({
                     divPointId: cont.id,
                     kitId: cont.tool.id,
                     kitTitle: cont.tool.title,
                     questions: cont.tool.questions,
+                    incognito: cont.incognito_mode
                 })
             })
             setKits(kitsArr);
@@ -60,7 +62,7 @@ export default function DivPointByMapId({ mapId }) {
                 </List>
             </Box>
             <Box mt='50px' display='flex' flexDir='column' alignItems='center'>
-                {kits.map(({kitTitle, questions, kitId}) => (
+                {kits.map(({kitTitle, questions, kitId, incognito}) => (
                     <>
                         <Heading as="h2" size="lg" m={'10px 2px'} id={kitId}>Kit: {kitTitle}</Heading>
                         {questions.map(({question}) => (
@@ -69,7 +71,7 @@ export default function DivPointByMapId({ mapId }) {
                             {comments.filter(kit => kit.kitTitle === kitTitle)
                                 .map(({author, text}) => (
                                     <>
-                                        <Text m='12px' w='60%'><strong>{author.name}</strong>: {text}</Text>
+                                        <Text m='12px' w='60%'><strong>{incognito ? 'anônimo' : author.name}</strong>: {text}</Text>
                                     </>
                                 ))}
                             </>
