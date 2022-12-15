@@ -39,6 +39,7 @@ export default function DivPointByMapId({ mapId, isLoading }) {
                     kitId: cont.tool.id,
                     kitTitle: cont.tool.title,
                     questions: cont.tool.questions,
+                    incognito: cont.incognito_mode
                 })
             })
             setKits(kitsArr);
@@ -97,7 +98,7 @@ export default function DivPointByMapId({ mapId, isLoading }) {
                             <>
                                 <Heading as="h1" fontSize={'24px'} fontWeight='400'>mapa: {label.toLowerCase()}</Heading>
                                 {kits.filter(({mapId}) => mapId === value)
-                                .map(({kitTitle, questions, kitId}) => (
+                                .map(({kitTitle, questions, kitId, incognito}) => (
                                     <>
                                         <Heading as="h2" fontSize={'24px'} mt={5} id={kitId}>kit: {kitTitle}</Heading>
                                         {questions.map(({question}) => (
@@ -106,7 +107,7 @@ export default function DivPointByMapId({ mapId, isLoading }) {
                                             {comments.filter(kit => kit.kitTitle === kitTitle)
                                                 .map(({author, text}) => (
                                                     <>
-                                                        <Text mt='12px' w='60%'><strong>{author.name}</strong>: {text}</Text>
+                                                        <Text mt='12px' w='60%'><strong>{incognito ? 'anônimo' : author.name}</strong>: {text}</Text>
                                                     </>
                                                 ))}
                                             </>
