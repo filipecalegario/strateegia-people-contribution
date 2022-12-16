@@ -62,14 +62,14 @@ export const generateDocument = (mapId, kits, comments) => {
                 const data = {
                     map_title: label,
                     questions: kits.filter(({mapId}) => mapId === value)
-                    .map(({kitTitle, questions}) => {
+                    .map(({kitTitle, questions, incognito}) => {
                         return {
                             kit_title: kitTitle,
                             question_title: questions.map(({question}) => question),
                             comments: comments.filter(kit => kit.kitTitle === kitTitle)
                             .map(({author, text}) => {
                                 return {
-                                    user: author.name + ':',
+                                    user: incognito ? 'anônimo:' : author.name + ':',
                                     comment: text
                                 }
                             })
